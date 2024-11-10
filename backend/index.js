@@ -1,8 +1,9 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors'); 
+const cors = require('cors');
 const nodemailer = require('nodemailer');
 const sqlite3 = require('sqlite3').verbose();
+const os = require('os'); // To get network interfaces for the MAC address
 
 const app = express();
 
@@ -30,6 +31,9 @@ db.run(`
   )
 `);
 
+// Whitelisted email addresses
+const whitelistedEmails = ['shravanisonawane1708@gmail.com'];
+
 // Nodemailer transporter setup
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -45,11 +49,59 @@ function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
 }
 
+// Send an email to the admin about unauthorized access
+async function notifyAdmin(email, ip, mac, userAgent, timestamp) {
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: 'harshbhushangupta@gmail.com',
+      subject: 'Unauthorized Login Attempt',
+      text: `An unauthorized login attempt was made with email: ${email}. Here are the details:
+            IP Address: ${ip}
+            MAC Address: ${mac}
+            User-Agent: ${userAgent}
+            Time of Attempt: ${timestamp}`,
+    });
+  } catch (error) {
+    console.error('Error notifying admin:', error);
+  }
+}
+
+// Function to get the real IP address (considering reverse proxies)
+function getIpAddress(req) {
+  const forwardedIps = req.headers['x-forwarded-for'];
+  if (forwardedIps) {
+    // If X-Forwarded-For header exists, get the first IP (real client IP)
+    return forwardedIps.split(',')[0];
+  }
+  return req.ip; // Fallback to req.ip if no X-Forwarded-For header
+}
+
+
 // Route to send OTP to user email
 app.post('/send-otp', async (req, res) => {
   const { email } = req.body;
   if (!email) {
     return res.status(400).json({ message: 'Email is required' });
+  }
+
+  if (!whitelistedEmails.includes(email)) {
+    const ip = getIpAddress(req);  // IP address of the requester
+    const mac = req.headers['x-mac-address'] || 'MAC Address not available'; // MAC address (if available)
+    const userAgent = req.get('User-Agent'); // User-Agent string from headers
+    const timestamp = new Date().toISOString(); // Timestamp of the attempt
+
+    // Notify the admin about the unauthorized login attempt
+    notifyAdmin(email, ip, mac, userAgent, timestamp)
+      .then(() => {
+        console.log('Admin notified of unauthorized login attempt.');
+      })
+      .catch((error) => {
+        console.error('Error notifying admin:', error);
+      });
+
+    // Proceed with other steps like denying access
+    return res.status(400).json({ message: 'This email is not authorized to log in.' });
   }
 
   const otp = generateOtp();
@@ -84,6 +136,13 @@ app.post('/send-otp', async (req, res) => {
 // Route to verify OTP
 app.post('/verify-otp', (req, res) => {
   const { email, otp } = req.body;
+
+  if (!whitelistedEmails.includes(email)) {
+    const ip = req.ip; // Capture the user's IP address
+    const mac = getMacAddress(); // Capture the MAC address
+    notifyAdmin(email, ip, mac); // Notify admin about unauthorized access
+    return res.status(403).json({ message: 'Unauthorized email address' });
+  }
 
   db.get(
     `SELECT * FROM otp_store WHERE email = ? ORDER BY id DESC LIMIT 1`,
