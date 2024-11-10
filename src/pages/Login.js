@@ -1,5 +1,6 @@
 // src/components/Login.js
 import React, { useState } from 'react';
+import axios from 'axios';  // Import axios
 import './Login.css';
 
 const Login = ({ onLoginSuccess }) => {
@@ -10,15 +11,29 @@ const Login = ({ onLoginSuccess }) => {
     setEmail(e.target.value);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Basic email validation regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (emailRegex.test(email)) {
-      alert("Login successful");
       setError('');
-      onLoginSuccess(); // Notify App.js of successful login
+      
+      try {
+        // Send POST request to send OTP
+        const response = await axios.post('http://localhost:5000/send-otp', { email });
+        
+        if (response.status === 200) {
+          alert("OTP sent to your email.");
+          onLoginSuccess(); // Notify App.js of successful login
+        } else {
+          setError('Failed to send OTP. Please try again.');
+        }
+      } catch (error) {
+        console.error("Error sending OTP:", error);
+        setError('An error occurred while sending the OTP. Please try again later.');
+      }
+      
     } else {
       setError('Please enter a valid email address.');
     }

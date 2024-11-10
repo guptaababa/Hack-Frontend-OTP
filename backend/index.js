@@ -1,9 +1,14 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors'); 
 const nodemailer = require('nodemailer');
 const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
+
+// Enable CORS with default settings
+app.use(cors());
+
 app.use(express.json());
 
 // Connect to SQLite database
@@ -125,7 +130,7 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
