@@ -1,0 +1,15 @@
+/* src/pages/Home.css */
+
+.home-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f9f9f9;
+  }
+  
+  .success-message {
+    color: #28a745; /* Green color */
+    font-size: 2.5em;
+    font-weight: bold;
+  }

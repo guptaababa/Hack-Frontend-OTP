@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import './Login.css';
 
-const Login = () => {
+const Login = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
 
@@ -18,7 +18,7 @@ const Login = () => {
     if (emailRegex.test(email)) {
       alert("Login successful");
       setError('');
-      // Add further login logic here, such as authentication
+      onLoginSuccess(); // Notify App.js of successful login
     } else {
       setError('Please enter a valid email address.');
     }
