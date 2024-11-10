@@ -7,9 +7,11 @@ import Home from './pages/Home';
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isOtpVerified, setIsOtpVerified] = useState(false);
+  const [email, setEmail] = useState('');  // Add state to store email
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = (userEmail) => {
     setIsLoggedIn(true);
+    setEmail(userEmail); // Store the email from Login
   };
 
   const handleOtpVerified = () => {
@@ -21,7 +23,7 @@ function App() {
       {isOtpVerified ? (
         <Home />
       ) : isLoggedIn ? (
-        <Submit onOtpVerified={handleOtpVerified} />
+        <Submit onOtpVerified={handleOtpVerified} email={email} />
       ) : (
         <Login onLoginSuccess={handleLoginSuccess} />
       )}

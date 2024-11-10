@@ -25,7 +25,7 @@ const Login = ({ onLoginSuccess }) => {
         
         if (response.status === 200) {
           alert("OTP sent to your email.");
-          onLoginSuccess(); // Notify App.js of successful login
+          onLoginSuccess(email); // Notify App.js of successful login
         } else {
           setError('Failed to send OTP. Please try again.');
         }

@@ -1,8 +1,9 @@
 // src/pages/Submit.js
 import React, { useState } from 'react';
+import axios from 'axios'; 
 import './Submit.css';
 
-const Submit = ({ onOtpVerified }) => {
+const Submit = ({ onOtpVerified, email }) => {
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
 
@@ -10,16 +11,23 @@ const Submit = ({ onOtpVerified }) => {
     setOtp(e.target.value);
   };
 
-  const handleOtpSubmit = (e) => {
+  const handleOtpSubmit = async (e) => {
     e.preventDefault();
 
-    const correctOtp = '123456';
-    if (otp === correctOtp) {
-      alert("OTP verified successfully!");
-      setError('');
-      onOtpVerified(); // Call the function to navigate to Home
-    } else {
-      setError('Incorrect OTP. Please try again.');
+    try {
+      // Send POST request to verify OTP
+      const response = await axios.post('http://localhost:5000/verify-otp', { email, otp });
+
+      if (response.status === 200) {
+        alert("OTP verified successfully!");
+        setError('');
+        onOtpVerified(); // Call the function to navigate to Home
+      } else {
+        setError('Incorrect OTP. Please try again.');
+      }
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      setError('An error occurred while verifying the OTP. Please try again later.');
     }
   };
 
